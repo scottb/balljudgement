@@ -1,0 +1,204 @@
+<ver>0.76</ver>
+<efn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\fever2_fmri.exp</efn>
+<con>
+<pause>P</pause>
+<pause_code></pause_code>
+<port1>1</port1>
+<quit>Q</quit>
+<quit_code></quit_code>
+<resume>R</resume>
+<resume_code></resume_code>
+<send_output>0</send_output>
+<start_code></start_code>
+</con>
+<dbi></dbi>
+<dbs>button</dbs>
+<ddi>0</ddi>
+<dds>
+<device>
+<color>0</color>
+<height>0</height>
+<index>-1</index>
+<name>None</name>
+<refresh>0</refresh>
+<width>0</width>
+</device>
+</dds>
+<ddv>Primärer Anzeigetreiber</ddv>
+<dir>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri</dir>
+<dmd>16</dmd>
+<dmh>768</dmh>
+<dmr>60</dmr>
+<dmw>1024</dmw>
+<dsd>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri</dsd>
+<dxv>6</dxv>
+<fir>7</fir>
+<idt>1000</idt>
+<ipi>0</ipi>
+<isb>10000</isb>
+<lfd>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\logfiles</lfd>
+<lnb>1</lnb>
+<lno>1</lno>
+<log>
+<delimiter>9</delimiter>
+<general_list>1</general_list>
+<set_def_file></set_def_file>
+<stimulus_list>0</stimulus_list>
+<subject_id></subject_id>
+<subject_id_pol>0</subject_id_pol>
+<video_list>0</video_list>
+</log>
+<lol>1</lol>
+<lpr>xx_</lpr>
+<mss>4</mss>
+<nam>FEVER</nam>
+<pda>0x378</pda>
+<pdb>button</pdb>
+<pdd>0</pdd>
+<pdi>0</pdi>
+<pdr>7</pdr>
+<pdv>10</pdv>
+<pia>0x378</pia>
+<ppi>1</ppi>
+<rdl>
+<device>
+<axis>
+<max>1000</max>
+<min>-1000</min>
+<name>X-Achse</name>
+<restricted>1</restricted>
+<scale>1</scale>
+</axis>
+<axis>
+<max>1000</max>
+<min>-1000</min>
+<name>Y-Achse</name>
+<restricted>1</restricted>
+<scale>1</scale>
+</axis>
+<axis>
+<max>1000</max>
+<min>-1000</min>
+<name>Lenkrad</name>
+<restricted>1</restricted>
+<scale>1</scale>
+</axis>
+<name>Maus</name>
+</device>
+</rdl>
+<rep>0</rep>
+<rts>1</rts>
+<sbs>100000</sbs>
+<sce>
+<sfn>all_scenarios</sfn>
+</sce>
+<sce>
+<idv>
+<ibn>Leertaste</ibn>
+<idn>Tastatur</idn>
+</idv>
+<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\instruction.sce</sfn>
+</sce>
+<sce>
+<idv>
+<ibn>Taste 0</ibn>
+<ibn>Taste 1</ibn>
+<idn>Maus</idn>
+</idv>
+<idv>
+<ibn>Leertaste</ibn>
+<idn>Tastatur</idn>
+</idv>
+<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\fever_fmri_blk1.sce</sfn>
+</sce>
+<sce>
+<idv>
+<ibn>Leertaste</ibn>
+<idn>Tastatur</idn>
+</idv>
+<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\instruction_nf.sce</sfn>
+</sce>
+<sce>
+<idv>
+<ibn>Taste 0</ibn>
+<ibn>Taste 1</ibn>
+<idn>Maus</idn>
+</idv>
+<idv>
+<ibn>Leertaste</ibn>
+<idn>Tastatur</idn>
+</idv>
+<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\fever_fmri_blk2_nf.sce</sfn>
+</sce>
+<sce>
+<idv>
+<ibn>Leertaste</ibn>
+<idn>Tastatur</idn>
+</idv>
+<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\pause.sce</sfn>
+</sce>
+<sce>
+<idv>
+<ibn>Taste 0</ibn>
+<ibn>Taste 1</ibn>
+<idn>Maus</idn>
+</idv>
+<idv>
+<ibn>Leertaste</ibn>
+<idn>Tastatur</idn>
+</idv>
+<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\fever_fmri_blk2_nf2.sce</sfn>
+</sce>
+<sct>
+<capture_device>
+<bps></bps>
+<chan></chan>
+<do_rec_vol>0</do_rec_vol>
+<freq></freq>
+<name>None</name>
+<rec_vol>1</rec_vol>
+</capture_device>
+<resp_dev>
+<combine>0</combine>
+<ignore>1000</ignore>
+<rec_dur>1000</rec_dur>
+<save>0</save>
+<thresh>0.2</thresh>
+</resp_dev>
+</sct>
+<sde>
+<custom_buf>sec_hw</custom_buf>
+<mixer>dx_software</mixer>
+</sde>
+<sdv>Primärer Soundtreiber</sdv>
+<smc>2</smc>
+<smd>16</smd>
+<smr>44100</smr>
+<srd>
+<cts>0</cts>
+<dsrin>0</dsrin>
+<dsrout>0</dsrout>
+<dtr>disable</dtr>
+<rts>disable</rts>
+<spd></spd>
+<spn></spn>
+<spp></spp>
+<spr></spr>
+<sps></sps>
+</srd>
+<srs>1</srs>
+<ssb>2000</ssb>
+<svl>
+<attenuation>0</attenuation>
+<do_attenuation>0</do_attenuation>
+<do_volume>0</do_volume>
+<volume>1</volume>
+</svl>
+<tpi>1</tpi>
+<udt>0</udt>
+<uex>0</uex>
+<ufi>1</ufi>
+<ulo>age:   --   sex:  m  handedness:   r</ulo>
+<unc>100</unc>
+<upb>0</upb>
+<urp>1</urp>
