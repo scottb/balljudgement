@@ -1,5 +1,5 @@
 <ver>0.76</ver>
-<efn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\fever2_fmri.exp</efn>
+<efn>Z:\fever2_fmri\fever2_fmri.exp</efn>
 <con>
 <pause>P</pause>
 <pause_code></pause_code>
@@ -25,18 +25,18 @@
 </device>
 </dds>
 <ddv>Primärer Anzeigetreiber</ddv>
-<dir>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri</dir>
+<dir>Z:\fever2_fmri</dir>
 <dmd>16</dmd>
 <dmh>768</dmh>
 <dmr>60</dmr>
 <dmw>1024</dmw>
-<dsd>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri</dsd>
+<dsd>Z:\fever2_fmri</dsd>
 <dxv>6</dxv>
 <fir>7</fir>
 <idt>1000</idt>
 <ipi>0</ipi>
 <isb>10000</isb>
-<lfd>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\logfiles</lfd>
+<lfd>Z:\fever2_fmri\logfiles</lfd>
 <lnb>1</lnb>
 <lno>1</lno>
 <log>
@@ -97,7 +97,7 @@
 <ibn>Leertaste</ibn>
 <idn>Tastatur</idn>
 </idv>
-<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\instruction.sce</sfn>
+<sfn>Z:\fever2_fmri\instruction.sce</sfn>
 </sce>
 <sce>
 <idv>
@@ -109,33 +109,14 @@
 <ibn>Leertaste</ibn>
 <idn>Tastatur</idn>
 </idv>
-<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\fever_fmri_blk1.sce</sfn>
+<sfn>Z:\fever2_fmri\fever_fmri_blk1.sce</sfn>
 </sce>
 <sce>
 <idv>
 <ibn>Leertaste</ibn>
 <idn>Tastatur</idn>
 </idv>
-<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\instruction_nf.sce</sfn>
-</sce>
-<sce>
-<idv>
-<ibn>Taste 0</ibn>
-<ibn>Taste 1</ibn>
-<idn>Maus</idn>
-</idv>
-<idv>
-<ibn>Leertaste</ibn>
-<idn>Tastatur</idn>
-</idv>
-<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\fever_fmri_blk2_nf.sce</sfn>
-</sce>
-<sce>
-<idv>
-<ibn>Leertaste</ibn>
-<idn>Tastatur</idn>
-</idv>
-<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\pause.sce</sfn>
+<sfn>Z:\fever2_fmri\instruction_nf.sce</sfn>
 </sce>
 <sce>
 <idv>
@@ -147,7 +128,26 @@
 <ibn>Leertaste</ibn>
 <idn>Tastatur</idn>
 </idv>
-<sfn>C:\Dokumente und Einstellungen\ullsperg\Eigene Dateien\presentation\fever2_fmri\fever_fmri_blk2_nf2.sce</sfn>
+<sfn>Z:\fever2_fmri\fever_fmri_blk2_nf.sce</sfn>
+</sce>
+<sce>
+<idv>
+<ibn>Leertaste</ibn>
+<idn>Tastatur</idn>
+</idv>
+<sfn>Z:\fever2_fmri\pause.sce</sfn>
+</sce>
+<sce>
+<idv>
+<ibn>Taste 0</ibn>
+<ibn>Taste 1</ibn>
+<idn>Maus</idn>
+</idv>
+<idv>
+<ibn>Leertaste</ibn>
+<idn>Tastatur</idn>
+</idv>
+<sfn>Z:\fever2_fmri\fever_fmri_blk2_nf2.sce</sfn>
 </sce>
 <sct>
 <capture_device>
