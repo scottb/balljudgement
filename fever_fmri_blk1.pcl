@@ -4,8 +4,6 @@
 # run1 (block1) is not externally triggered -- adjustment phase during pilot scans
 # run2 (block2) is externally triggered -- stabilization phase during functional scans
 
-# output_port parallel1 = output_port_manager.get_port(1);	# not in fmri !!
-
 # configuration constants:
 int TRG_PER_TRIAL = 9;	# trial length as trigger number
 double TRL_LENGTH = 9000.0;		# average trial length in ms
@@ -14,10 +12,12 @@ double WALL_POS = -1.0*LEFT_MAX;	# wall position
 double START_WIDTH = -100.0 - LEFT_MAX;	# start range from LEFT_MAX to -100
 double MIN_S_DIFF = 50.0;		# minimal start position difference
 double MIN_V_DIFF = 0.1;		# minimal speed difference
-int N_MAX = 100;			# number of movement judgments in adjustment phase (run 1) and in stabilization phase (run 2)
+int N_MAX = 100;			# number of trials
 double UP_THRESHOLD = 0.4;		# uppermost error rate (for run 2)
 double LOW_THRESHOLD = 0.3;		# lowermost error rate
 int WINDOW = 20;			# number of trials in monitoring window
+double UP_THRESH_NF = 0.35;		# nf trials in ca. 30% of each response type
+double LOW_THRESH_NF = 0.25;
 
 # variables:
 int trg = 1;				# add offset (for start in fmri-emulation)
@@ -45,27 +45,27 @@ array<int> SCHEDULE_OF_NULL_EVENTS[12] = { 7, 16, 24, 35, 48, 55, 63, 77, 89, 95
 
 ### subroutines
 sub # wait for a given number of triggers
-   wait_trg(int no_trg)
+  wait_trg(int no_trg)
 begin
-   trg = trg + no_trg;	# add waiting duration
-   loop
-   until
-      pulse_manager.main_pulse_count() >= trg
-   begin
-   end;
-   log_event.set_event_code("trigger_no: " + string(trg));	# log trigger number
-   log_param.present();
+  trg = trg + no_trg;	# add waiting duration
+  loop
+  until
+    pulse_manager.main_pulse_count() >= trg
+  begin
+  end;
+  log_event.set_event_code("trigger_no: " + string(trg));	# log trigger number
+  log_param.present();
 end;
 
 sub
-  show_fixation_cross
+  show_fixation_cross(int fix_duration)
 begin
   fix.set_duration(next_picture);
   fix.set_event_code("fix");
   fixation.present();
   wait_trg(TRG_PER_TRIAL);
 
-  fix.set_duration(next_picture);
+  fix.set_duration(fix_duration);
   fix.set_event_code("null_event " + string(TRL_LENGTH));
   fixation.present();
 end;
@@ -76,10 +76,10 @@ begin
   loop
     int nn = 1
   until
-    nn > 12
+    nn > SCHEDULE_OF_NULL_EVENTS.count()
   begin
-    if ( SCHEDULE_OF_NULL_EVENTS[nn] == n ) then
-      show_fixation_cross();
+    if (SCHEDULE_OF_NULL_EVENTS[nn] == n) then
+      show_fixation_cross(next_picture);
     end;
     nn = nn + 1;
   end;
@@ -88,18 +88,18 @@ end;
 sub
   log_trial_parameters
 begin
-  log_event.set_event_code("td: " + string(t_diff));	# log new t_diff
+  log_event.set_event_code("td: " + string(t_diff));
   log_param.present();
 
-  string report = "v1st: " + string(v[firstball]) + " v2nd: " + string(v[secndball]);		# log new speed (first ball first)
+  string report = "v1st: " + string(v[firstball]) + " v2nd: " + string(v[secndball]);
   log_event.set_event_code(report);
   log_param.present();
 
-  report = "p1st: " + string(pos[firstball]) + " p2nd: " + string(pos[secndball]);	# log new start positions (first ball first)
+  report = "p1st: " + string(pos[firstball]) + " p2nd: " + string(pos[secndball]);
   log_event.set_event_code(report);
   log_param.present();
 
-  report = "td_avr: " + string(td_avr) + " err: " + string(errors);			# log td_avr and errors
+  report = "td_avr: " + string(td_avr) + " err: " + string(errors);
   log_event.set_event_code(report);
   log_param.present();
 end;
@@ -107,17 +107,17 @@ end;
 sub
   compute_running_averages(int n)
 begin
-  errors = 0.0;					# error counter (last ten trials)
+  errors = 0.0;
   valid = 0;
 
   if (n > WINDOW) then
     loop
       int tn = 1
     until
-      tn > WINDOW				# count last 10 trials (averaging window)
+      tn > WINDOW
     begin
-      resp_buff[tn] = resp_buff[tn + 1];	# shift response monitoring window
-      if (resp_buff[tn] >= 0) then		# omit late responses
+      resp_buff[tn] = resp_buff[tn + 1];
+      if (resp_buff[tn] >= 0) then
 	errors = errors + double(resp_buff[tn]);
 	valid = valid + 1;
       end;
@@ -130,7 +130,7 @@ begin
     until
       tn > n
     begin
-      if (resp_buff[tn] >= 0) then		# omit late responses
+      if (resp_buff[tn] >= 0) then
 	errors = errors + double(resp_buff[tn]);
 	valid = valid + 1;
       end;
@@ -139,9 +139,40 @@ begin
   end;
 
   if (valid >= 1) then
-    errors = errors / double(valid);		# error rate in sliding window
+    errors = errors / double(valid);
   else
-    errors = LOW_THRESHOLD;			# if no valid response - no change of difficulty
+    errors = LOW_THRESHOLD;
+  end;
+end;
+
+sub
+  compute_new_speed_and_position
+begin
+  firstball = random(1, 2);
+  secndball = 3 - firstball;
+
+  loop
+    bool ctrl = false
+  until
+    ctrl
+  begin
+    v[firstball] = 1.6 - random()*0.8;			# pick random speed v[1st] between 0.8 and 1.6 pixel/frame
+    pos[1] = LEFT_MAX + random() * START_WIDTH;		# pick random position 1 between LEFT_MAX and LEFT_MAX + START_WIDTH
+
+    if (pos[1] > (LEFT_MAX + START_WIDTH/2.0)) then
+      pos[2] = pos[1] - (MIN_S_DIFF + (START_WIDTH/2.0 - MIN_S_DIFF)*random());	# pick random position 2 at least MIN_S_DIFF and max max_width pixels before pos1
+    else
+      pos[2] = pos[1] + (MIN_S_DIFF + (START_WIDTH/2.0 - MIN_S_DIFF)*random());	# pick random position 2 at least MIN_S_DIFF and max max_width pixels after pos1
+    end;
+
+    s[1] = WALL_POS - pos[1];				# stretch to wall pos1
+    s[2] = WALL_POS - pos[2];				# stretch to wall pos2
+
+    t[firstball] = s[firstball] / v[firstball];		# time until first ball reaches wall
+    t[secndball] = t[firstball] + t_diff;		# time until second ball reaches wall
+    v[secndball] = s[secndball] / t[secndball];		# speed 2nd
+
+    ctrl = (abs(v[1] - v[2]) <= MIN_V_DIFF);
   end;
 end;
 
@@ -167,9 +198,7 @@ begin
       td_avr = td_avr + td[tn];			# sum up t_diff of last trials in averaging window
       tn = tn + 1;
     end;
-
     td_avr = td_avr / double(WINDOW);		# mean t_diff in monitoring window
-
   else
     td[n] = td[WINDOW + 1];
     loop
@@ -180,47 +209,15 @@ begin
       td_avr = td_avr + td[tn];			# sum up t_diff of last trials (first trials of run)
       tn = tn + 1;
     end;
-
     td_avr = td_avr / double(n);		# mean t_diff over first n trials
-  end;
-end;
-
-sub
-  compute_new_speed_and_position
-begin
-  firstball = random(1, 2);	# pick first ball
-  secndball = 3 - firstball;	# other ball second
-
-  loop
-    bool ctrl = false
-  until
-    ctrl	# loop until v[1] and v[2] differ by at least MIN_V_DIFF
-  begin
-    v[firstball] = 1.6 - random()*0.8;			# pick random speed v[1st] between 0.8 and 1.6 pixel/frame
-    pos[1] = LEFT_MAX + random() * START_WIDTH;		# pick random position 1 between LEFT_MAX and LEFT_MAX + START_WIDTH
-
-    if (pos[1] > (LEFT_MAX + START_WIDTH/2.0)) then
-      pos[2] = pos[1] - (MIN_S_DIFF + (START_WIDTH/2.0 - MIN_S_DIFF)*random());	# pick random position 2 at least MIN_S_DIFF and max max_width pixels before pos1
-    else
-      pos[2] = pos[1] + (MIN_S_DIFF + (START_WIDTH/2.0 - MIN_S_DIFF)*random());	# pick random position 2 at least MIN_S_DIFF and max max_width pixels after pos1
-    end;
-
-    s[1] = WALL_POS - pos[1];				# stretch to wall pos1
-    s[2] = WALL_POS - pos[2];				# stretch to wall pos2
-
-    t[firstball] = s[firstball] / v[firstball];		# time until first ball reaches wall
-    t[secndball] = t[firstball] + t_diff;		# time until second ball reaches wall
-
-    v[secndball] = s[secndball]/t[secndball];		# speed 2nd
-
-    # test whether speed difference is not too low
-    ctrl = (abs(v[1] - v[2]) <= MIN_V_DIFF);
   end;
 end;
 
 sub
   show_ball_movement
 begin
+  warn.set_part_x(1, int(WALL_POS));
+  warning.present();
   loop
     double i = 0.0
   until
@@ -231,10 +228,8 @@ begin
     ball.set_part_x(1, int(x[1]));
     ball.set_part_x(2, int(x[2]));
     ball.set_part_x(3, int(WALL_POS));		# present wall
-
     if (i == 1.0) then
       one_step.set_event_code("ball1");
-      # parallel1.send_code(101);		# log ball movement and send trigger only at start
     else
       one_step.set_event_code("");
     end;
@@ -244,26 +239,41 @@ begin
 end;
 
 sub
+  show_correct_feedback
+begin
+  symbol.set_part(1, correct);
+  feed_event.set_event_code("correct");
+  feedbk.present();
+  resp_buff[WINDOW + 1] = 0;
+end;
+
+sub
+  show_incorrect_feedback
+begin
+  symbol.set_part(1, error);
+  feed_event.set_event_code("error");
+  feedbk.present();
+  resp_buff[WINDOW + 1] = 1;
+end;
+
+sub
+  show_late_feedback
+begin
+  symbol.set_part(1, miss);
+  feed_event.set_event_code("late");
+  feedbk.present();
+  resp_buff[WINDOW + 1] = -1;
+end;
+
+sub
   show_feedback
 begin
-  if (response_manager.hits() > 0) then			# correct?
-    symbol.set_part(1, correct);
-    feed_event.set_event_code("correct");
-    # feed_event.set_port_code(111);			# 111 = correct
-    feedbk.present();
-    resp_buff[WINDOW + 1] = 0;				# push "correct" in monitoring buffer
+  if (response_manager.hits() > 0) then
+    show_correct_feedback();
   elseif (response_manager.incorrects() > 0) then
-    symbol.set_part(1, error);
-    feed_event.set_event_code("error");
-    # feed_event.set_port_code(112);			# 111 = error
-    feedbk.present();
-    resp_buff[WINDOW + 1] = 1;				# push "error" in monitoring buffer
+    show_incorrect_feedback();
   else	# no response ...
-    symbol.set_part(1, miss);
-    feed_event.set_event_code("late");
-    # feed_event.set_port_code(110);			# 110 = late
-    feedbk.present();
-    resp_buff[WINDOW + 1] = -1;				# push "late" in monitoring buffer
+    show_late_feedback();
   end;
 end;
 
@@ -273,7 +283,8 @@ resp_buff[1] = 0;		# set 1st value of response buffer
 errors = 0.0;			# set 1st value of error average
 td_avr = t_diff;
 
-intro2.present();		# Present wait-for-trigger text. (gleich geht's los)
+#### intro of run
+intro2.present();		# Present wait-for-trigger text.
 
 ### initial fixation before each run
 wait_trg(0);			# wait for 1st trigger
@@ -281,7 +292,7 @@ wait_trg(0);			# wait for 1st trigger
 fix.set_duration(next_picture);
 fix.set_event_code("initial_fix: 10000");
 fixation.present();
-wait_trg(1); 			# wait for 1s (first trial will wait another 9s before starting
+wait_trg(1);			# wait for 1s (first trial will wait another 9s before starting)
 
 ###### start run #####
 loop
@@ -290,21 +301,19 @@ until
   n > N_MAX
 begin
   insert_defined_null_events(n);
-  show_fixation_cross();
+  show_fixation_cross(next_picture);
   compute_new_speed_and_position();
   log_trial_parameters();
 
-  # present wall 500ms before start of ball movement
-  warn.set_part_x(1, int(WALL_POS));
-  warning.present();
   show_ball_movement();
 
+  ###### response evaluation #########
   resp.set_target_button(firstball);			# set target button
   ask.present();					# ask for response
 
   show_feedback();
 
-  n = n + 1;						# increase trial counter
+  n = n + 1;
   compute_running_averages(n);
   compute_new_t_diff(n);
 
@@ -324,7 +333,7 @@ else
   td_stabil = td_stabil / double(count_stabil);
 end;
 
-show_fixation_cross();
+show_fixation_cross(next_picture);
 wait_trg(10);	# wait for 10 triggers (10000 ms)
 
 ### print starting difficulty in logfile
@@ -337,4 +346,4 @@ output.open("..\\parameter.txt" );
 output.print(td_stabil);
 output.close();
 
-ende.present();	# end of task
+ende.present();
