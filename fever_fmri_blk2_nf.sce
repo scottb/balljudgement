@@ -49,7 +49,6 @@ pcl_file = "fever_fmri_blk2_nf_new.pcl";		# pcl file required!!!
 
 ### fmri settings
 scenario_type = fMRI; #_emulation; 	 # change for real fMRI experiment!
-# scan_period = 1000;			# TR in ms
 pulses_per_scan = 1;			# 
 sequence_interrupt = false;		# a sequence of events with a given mri_pulse number can be 
 						# interrupted by the occurance of a later main pulse with an
@@ -57,16 +56,10 @@ sequence_interrupt = false;		# a sequence of events with a given mri_pulse numbe
 						# has not completed. 
 	
 pulse_code = 255;
-### eeg settings
-# scenario_type = trials;
-#default_output_# port = 1;	# choose trigger output # port!
-#write_codes = true;
-#pulse_width = 5; 		# pulses are 5 milliseconds long
 
 ### buttons
 active_buttons = 3;
 button_codes = 1, 2, 9;		# 9; 99 = key for start/continuation (e.g., SPACE)
-#target_button_codes = 1, 2, 9;
 ### screen
 screen_width = 1024;			# screen requirements (if screen has lower resolution, change parameters in feedb2.pcl!!! 
 screen_height = 768;
@@ -91,12 +84,6 @@ bitmap { filename = "nf_wob.bmp"; width = 80; height = 80;} nf;
 
 box { height = 500; width = 7; color = 200,200,200; } wall;
 text { caption = "Welche Kugel?";} question; 
-#text { 
-#	caption = "feedback"; 
-#	font_size = 20;		
-#} feed_txt;
-
-
 
 picture {
 	  box { height = 15; width = 3; color = 180,180,180; };
@@ -113,13 +100,11 @@ picture {
 
 # trial definitions #
 
-
 trial {
       picture los;
 	   time = 0;
       duration = next_picture;
       code = "wait_for_start_trigger";  
-      # port_code = 200; 
 } intro2;
 
 
@@ -139,7 +124,6 @@ trial {
 	} warn;
 	deltat = 1;
 	duration = 300;
-	# port_code = 100;    # trigger: warning before movement
 } warning;
 
 trial {
@@ -172,7 +156,6 @@ trial {
 		duration = 1500;
 		target_button = 1;
 		code = "question";
-		# port_code = 102;	# trigger: question
 	} resp;
 } ask;
 
@@ -188,7 +171,6 @@ trial {
 		deltat = 750;
 		duration = 1000;
 		code = "feedbk";
-		# port_code = 111;	# trigger: feedback -- 111 = correct; 112 = error; 110 = late
 	} feed_event;
 } feedbk;
 
@@ -200,7 +182,6 @@ trial {
 		x=0; y=0; 
 	};
 	deltat = 1;
-	#duration = 100;   # 100 s break 
 	target_button = 3;  # allow experimenter only to continue
 	code = "pause";
 } pause;
@@ -214,7 +195,6 @@ trial {
 	};
 	deltat = 1;
 	target_button = 3;  # allow experimenter only to continue
-	# port_code = 201;
 } ende;
 
 
@@ -237,5 +217,4 @@ trial {
 	};
 	deltat = 1;
 	target_button = 3;  # allow experimenter only to continue
-	# port_code = 201;
 } fehler;
