@@ -27,7 +27,7 @@
 
 scenario = "feedback on ball movement judgment";
 no_logfile = false;
-pcl_file = "fever_fmri_blk2_nf_new.pcl";
+pcl_file = "stabilization_phase.pcl";
 
 ### fmri settings
 scenario_type = fMRI_emulation;		# change for real fMRI experiment!

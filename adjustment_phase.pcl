@@ -1,4 +1,4 @@
-############# pcl file for fever_fmri_blk2.sce ### Markus Ullsperger, 08-22-01
+################ Markus Ullsperger, 08-22-01
 ## simple pictorial feedback
 
 # run1 (block1) is not externally triggered -- adjustment phase during pilot scans
@@ -41,16 +41,7 @@ array<double> x[2];			# array for ball positions
 array<double> t[2];			# array for time until ball reaches wall
 
 # null events will be inserted before these trials
-array<int> SCHEDULE_OF_NULL_EVENTS[14] = { 7, 16, 24, 35, 48, 55, 63, 77, 89, 95, 101, 116, 122, 135 };
-
-int start_time;            # variable for internal clock-triggering (block1)
-int cnt_corr = 0;             #counter of correct/error trials
-int cnt_err = 0;
-int nf_corr = 0;               #counter of nf trials on correct responses
-int nf_err = 0;                #counter of nf trials on incorrect responses
-int nf_current_corr = 0;       #current value of cumulating probability to present nf trial (threshold = 10) on corrects
-int nf_current_err = 0;        #current value of cumulating probability to present nf trial on errors
-double ratio;
+array<int> SCHEDULE_OF_NULL_EVENTS[12] = { 7, 16, 24, 35, 48, 55, 63, 77, 89, 95, 101, 116 };
 
 ### subroutines
 sub # wait for a given number of triggers
@@ -188,10 +179,10 @@ end;
 sub
   compute_new_t_diff(int n)
 begin
-  if (errors < LOW_THRESHOLD) then		# stabilization run - react on changes of mean performance in monitoring buffer
-    t_diff = td_avr - td_avr*0.1;		# make it more difficult (time difference smaller)
-  elseif (errors > UP_THRESHOLD) then
-    t_diff = td_avr + td_avr*0.1;		# make it easier (time difference larger)
+  if resp_buff[WINDOW + 1] == 0 then		# adjustment run - react on every response
+    t_diff = t_diff - t_diff * 0.1;		# make it more difficult (time difference smaller)
+  elseif resp_buff[WINDOW + 1] == 1 then
+    t_diff = t_diff + t_diff * 0.1;		# make it easier (time difference larger)
   end;
 
   td[WINDOW + 1] = t_diff;			# push new t_diff in monitoring buffer
@@ -250,62 +241,19 @@ end;
 sub
   show_correct_feedback
 begin
-  if (cnt_corr == 0) then
-    nf_current_corr = 0;
-  else
-    ratio = double(nf_corr)/double(cnt_corr); # calc. frequency of nf_trials
-    if (ratio < LOW_THRESH_NF) then                             # cumulate probability
-      nf_current_corr = nf_current_corr + random(2,5);
-    elseif (ratio > UP_THRESH_NF) then
-      nf_current_corr = nf_current_corr + random(1,4);
-    else
-      nf_current_corr = nf_current_corr + random(1,5);
-    end;
-  end;
-  cnt_corr = cnt_corr + 1;
-  # no informative feedback in ca. 30 % (if cumulated value >= 10)
-  if (nf_current_corr < 10) then
-    symbol.set_part(1, correct);
-    feed_event.set_event_code("correct");
-  else
-    nf_current_corr = 0;
-    nf_corr = nf_corr + 1;
-    symbol.set_part(1, nf);
-    feed_event.set_event_code("correct_nf");
-  end;
+  symbol.set_part(1, correct);
+  feed_event.set_event_code("correct");
   feedbk.present();
-  log_param.present();
   resp_buff[WINDOW + 1] = 0;
 end;
 
 sub
   show_incorrect_feedback
 begin
-  if (cnt_err == 0) then
-    nf_current_err = 0;
-  else
-    ratio = double(nf_err)/double(cnt_err); # calc. frequency of nf_trials
-    if (ratio < LOW_THRESH_NF) then                              # cumulate probability
-      nf_current_err = nf_current_err + random(2,5);
-    elseif (ratio > UP_THRESH_NF) then
-      nf_current_err = nf_current_err + random(1,4);
-    else
-      nf_current_err = nf_current_err + random(1,5);
-    end;
-  end;
-  cnt_err = cnt_err + 1;
-  # no informative feedback in ca. 30 % (if cumulated value >= 10)
-  if ( nf_current_err < 10 ) then
-    symbol.set_part(1, error);
-    feed_event.set_event_code("error");
-  else
-    nf_current_err = 0;
-    nf_err = nf_err +1;
-    symbol.set_part(1, nf);
-    feed_event.set_event_code("error_nf");
-  end;
+  symbol.set_part(1, error);
+  feed_event.set_event_code("error");
   feedbk.present();
-  resp_buff[WINDOW + 1] = 1;				# push "error" in monitoring buffer
+  resp_buff[WINDOW + 1] = 1;
 end;
 
 sub
@@ -314,7 +262,7 @@ begin
   symbol.set_part(1, miss);
   feed_event.set_event_code("late");
   feedbk.present();
-  resp_buff[WINDOW + 1] = -1;				# push "late" in monitoring buffer
+  resp_buff[WINDOW + 1] = -1;
 end;
 
 sub
@@ -327,25 +275,6 @@ begin
   else	# no response ...
     show_late_feedback();
   end;
-end;
-
-#######################################################################################################################
-
-input_file input = new input_file;
-input.open("parameter.txt");
-loop
-until
-  input.end_of_file()
-begin
-  td_stabil = input.get_double()
-end;
-
-if (!input.last_succeeded()) then
-  fehler.present();
-  exit("Scenario failed");
-else
-  t_diff = td_stabil;
-  input.close();
 end;
 
 ##### start movement judgment ######
@@ -372,8 +301,7 @@ until
   n > N_MAX
 begin
   insert_defined_null_events(n);
-  double fix_dur = 3500.0 + (50.0* double(int(random()*10.0 + 0.5)));  	# fixation varies from 3500 to 4000 ms
-  show_fixation_cross(int(fix_dur));
+  show_fixation_cross(next_picture);
   compute_new_speed_and_position();
   log_trial_parameters();
 
@@ -388,25 +316,34 @@ begin
   n = n + 1;
   compute_running_averages(n);
   compute_new_t_diff(n);
+
+  # ONLY IN ADJUSTMENT BLOCK (exclude first 20 trials)
+  if (n > WINDOW) && (errors >= LOW_THRESHOLD) && (errors <= UP_THRESHOLD) then
+    td_stabil = td_stabil + td_avr;			# run 1 -- adjust difficulty for start of run 2
+    count_stabil = count_stabil + 1;
+  end;
 end;
 
 log_trial_parameters();
 
-###  fixation belonging to last trial
-fix.set_duration(next_picture);
-fix.set_event_code("fix");
-fixation.present();
-wait_trg ( TRG_PER_TRIAL ); # subroutine -- here: wait for 9 triggers (1 trial)
+# estimate starting difficulty for next blocks
+if (count_stabil == 0) then
+  td_stabil = t_diff;
+else
+  td_stabil = td_stabil / double(count_stabil);
+end;
 
-### final fixation
-fix.set_duration(next_picture);
-fix.set_event_code("final_fix: 10000");
-fixation.present();
-wait_trg ( 10 ); # subroutine -- here: wait for 10 triggers (10000 ms)
+show_fixation_cross(next_picture);
+wait_trg(10);	# wait for 10 triggers (10000 ms)
 
-log_event.set_event_code("n_correct: " + string(cnt_corr) + " n_error: " + string(cnt_err));
+### print starting difficulty in logfile
+log_event.set_event_code("td_adjust: " + string(td_stabil));
 log_param.present();
-log_event.set_event_code("nf_correct: " + string(nf_corr) + " nf_error: " + string(nf_err));
-log_param.present();
+
+### print starting difficulty to output file in logfiles directory
+output_file output = new output_file;
+output.open("..\\parameter.txt" );
+output.print(td_stabil);
+output.close();
 
 ende.present();

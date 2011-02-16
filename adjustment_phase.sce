@@ -21,13 +21,11 @@
 #  111 .. correct
 #  112 .. error
 #  110 .. no response
-#  121 .. correct - no feedback
-#  122 .. error - no feedback
 #  255 .. mr-trigger
 
 scenario = "feedback on ball movement judgment";
 no_logfile = false;
-pcl_file = "fever_fmri_blk2_nf_new.pcl";
+pcl_file = "adjustment_phase.pcl";
 
 ### fmri settings
 scenario_type = fMRI_emulation;		# change for real fMRI experiment!
@@ -57,7 +55,6 @@ bitmap { filename = "ball2wob.bmp"; } ball2;
 bitmap { filename = "corr_wob.bmp"; width = 80; height = 80; } correct;
 bitmap { filename = "err_wob.bmp"; width = 80; height = 80; } error;
 bitmap { filename = "miss_wob.bmp"; width = 80; height = 80; } miss;
-bitmap { filename = "nf_wob.bmp"; width = 80; height = 80; } nf;
 
 box { height = 500; width = 7; color = 200,200,200; } wall;
 text { caption = "Welche Kugel?"; } question;
@@ -181,14 +178,3 @@ trial {
       # 4. td_avr;errors
   } log_event;
 } log_param;
-
-trial {
-  trial_duration = forever;
-  trial_type = correct_response;
-  picture {
-    text { caption = "FEHLER beim Lesen der Parameterdatei!!\n\nEnde mit ESC"; };
-    x=0; y=0;
-  };
-  deltat = 1;
-  target_button = 3;  # allow experimenter only to continue
-} fehler;
