@@ -2,15 +2,13 @@ scenario = "instruction for ball movement judgment";
 no_logfile = true;
 
 scenario_type = trials;
-### buttons
-active_buttons = 1;
-button_codes = 99;		# 99 = key for start/continuation (e.g., SPACE)
 
-### screen
-screen_width = 1024;			# screen requirements (if screen has lower resolution, change parameters in feedb2.pcl!!!
+active_buttons = 1;
+button_codes = 99;
+
+screen_width = 1024;
 screen_height = 768;
 screen_bit_depth = 16;
-
 default_font_size = 18;
 
 begin;
@@ -38,7 +36,6 @@ picture {
   x = 0; y = 0;
 } fixcross;
 
-# trial definitions #
 trial {
   trial_type = first_response;
   trial_duration = forever;
