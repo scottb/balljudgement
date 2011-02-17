@@ -47,6 +47,8 @@ int cnt_err = 0;
 int nf_corr = 0;
 int nf_err = 0;
 
+int score = 0;
+
 sub
   wait_trg(int no_trg)
 begin
@@ -252,54 +254,61 @@ end;
 sub
   show_correct_feedback
 begin
-  if ADJUSTMENT_PHASE then
-    symbol.set_part(1, correct);
-    feed_event.set_event_code("correct");
-    feedbk.present();
-    resp_buff[WINDOW + 1] = 0;
-  else
-    cnt_corr = cnt_corr + 1;
-    if (random(1,2) == 1) then
-      symbol.set_part(1, correct);
-      feed_event.set_event_code("correct");
+  cnt_corr = cnt_corr + 1;
+  symbol.set_part(1, correct);
+  score_text.set_caption("+50");
+  feed_event.set_event_code("correct");
+  if !ADJUSTMENT_PHASE && random(1,2) == 1 then
+    nf_corr = nf_corr + 1;
+    symbol.set_part(1, nf);
+    if random(1,2) == 1 then
+      score = score + 50;
+      score_text.set_caption("+50");
     else
-      nf_corr = nf_corr + 1;
-      symbol.set_part(1, nf);
-      feed_event.set_event_code("correct_nf");
+      score = score - 50;
+      score_text.set_caption("-50");
     end;
-    feedbk.present();
-    log_param.present();
-    resp_buff[WINDOW + 1] = 0;
+    feed_event.set_event_code("correct_nf");
+  else
+    score = score + 50;
   end;
+  score_text.redraw();
+  feedbk.present();
+  resp_buff[WINDOW + 1] = 0;
 end;
 
 sub
   show_incorrect_feedback
 begin
-  if ADJUSTMENT_PHASE then
-    symbol.set_part(1, error);
-    feed_event.set_event_code("error");
-    feedbk.present();
-    resp_buff[WINDOW + 1] = 1;
-  else
-    cnt_err = cnt_err + 1;
-    if (random(1,2) == 1) then
-      symbol.set_part(1, error);
-      feed_event.set_event_code("error");
+  cnt_err = cnt_err + 1;
+  symbol.set_part(1, error);
+  score_text.set_caption("-50");
+  feed_event.set_event_code("error");
+  if !ADJUSTMENT_PHASE && random(1,2) == 1 then
+    nf_err = nf_err + 1;
+    symbol.set_part(1, nf);
+    if random(1,2) == 1 then
+      score = score + 50;
+      score_text.set_caption("+50");
     else
-      nf_err = nf_err +1;
-      symbol.set_part(1, nf);
-      feed_event.set_event_code("error_nf");
+      score = score - 50;
+      score_text.set_caption("-50");
     end;
-    feedbk.present();
-    resp_buff[WINDOW + 1] = 1;
+    feed_event.set_event_code("error_nf");
+  else
+    score = score - 50;
   end;
+  score_text.redraw();
+  feedbk.present();
+  resp_buff[WINDOW + 1] = 1;
 end;
 
 sub
   show_late_feedback
 begin
   symbol.set_part(1, miss);
+  score_text.set_caption("0");
+  score_text.redraw();
   feed_event.set_event_code("late");
   feedbk.present();
   resp_buff[WINDOW + 1] = -1;

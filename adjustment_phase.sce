@@ -141,9 +141,18 @@ trial {
       x = 0; y = 0;
     } symbol;
     deltat = 750;
-    duration = 1000;
+    duration = 500;
     code = "feedbk";
   } feed_event;
+  stimulus_event {
+    picture {
+      text { caption = "+50"; } score_text;
+      x=0; y=0;
+    };
+    deltat = 1250;
+    duration = 500;
+    code = "feedbk_text";
+  } feed_text;
 } feedbk;
 
 trial {
