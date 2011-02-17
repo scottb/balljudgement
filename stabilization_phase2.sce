@@ -181,14 +181,3 @@ trial {
       # 4. td_avr;errors
   } log_event;
 } log_param;
-
-trial {
-  trial_duration = forever;
-  trial_type = correct_response;
-  picture {
-    text { caption = "FEHLER beim Lesen der Parameterdatei!!\n\nEnde mit ESC"; };
-    x=0; y=0;
-  };
-  deltat = 1;
-  target_button = 3;  # allow experimenter only to continue
-} fehler;

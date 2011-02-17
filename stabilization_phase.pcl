@@ -5,8 +5,8 @@
 # run2 (block2) is externally triggered -- stabilization phase during functional scans
 
 # configuration constants:
+bool ADJUSTMENT_PHASE = false;
 int TRG_PER_TRIAL = 9;	# trial length as trigger number
-double TRL_LENGTH = 9000.0;		# average trial length in ms
 double LEFT_MAX = -500.0;		# leftmost possible start position
 double WALL_POS = -1.0*LEFT_MAX;	# wall position
 double START_WIDTH = -100.0 - LEFT_MAX;	# start range from LEFT_MAX to -100
@@ -16,8 +16,6 @@ int N_MAX = 100;			# number of trials
 double UP_THRESHOLD = 0.4;		# uppermost error rate (for run 2)
 double LOW_THRESHOLD = 0.3;		# lowermost error rate
 int WINDOW = 20;			# number of trials in monitoring window
-double UP_THRESH_NF = 0.35;		# nf trials in ca. 30% of each response type
-double LOW_THRESH_NF = 0.25;
 
 # variables:
 int trg = 1;				# add offset (for start in fmri-emulation)
@@ -43,20 +41,17 @@ array<double> t[2];			# array for time until ball reaches wall
 # null events will be inserted before these trials
 array<int> SCHEDULE_OF_NULL_EVENTS[14] = { 7, 16, 24, 35, 48, 55, 63, 77, 89, 95, 101, 116, 122, 135 };
 
-int start_time;            # variable for internal clock-triggering (block1)
-int cnt_corr = 0;             #counter of correct/error trials
+#+++++
+int cnt_corr = 0;
 int cnt_err = 0;
-int nf_corr = 0;               #counter of nf trials on correct responses
-int nf_err = 0;                #counter of nf trials on incorrect responses
-int nf_current_corr = 0;       #current value of cumulating probability to present nf trial (threshold = 10) on corrects
-int nf_current_err = 0;        #current value of cumulating probability to present nf trial on errors
-double ratio;
+int nf_corr = 0;
+int nf_err = 0;
+#-----
 
-### subroutines
-sub # wait for a given number of triggers
+sub
   wait_trg(int no_trg)
 begin
-  trg = trg + no_trg;	# add waiting duration
+  trg = trg + no_trg;
   loop
   until
     pulse_manager.main_pulse_count() >= trg
@@ -75,7 +70,7 @@ begin
   wait_trg(TRG_PER_TRIAL);
 
   fix.set_duration(fix_duration);
-  fix.set_event_code("null_event " + string(TRL_LENGTH));
+  fix.set_event_code("null_event " + string(TRG_PER_TRIAL*1000));
   fixation.present();
 end;
 
@@ -157,7 +152,7 @@ end;
 sub
   compute_new_speed_and_position
 begin
-  firstball = random(1, 2);
+  firstball = random(1,2);
   secndball = 3 - firstball;
 
   loop
@@ -188,11 +183,13 @@ end;
 sub
   compute_new_t_diff(int n)
 begin
+  #+++++
   if (errors < LOW_THRESHOLD) then		# stabilization run - react on changes of mean performance in monitoring buffer
     t_diff = td_avr - td_avr*0.1;		# make it more difficult (time difference smaller)
   elseif (errors > UP_THRESHOLD) then
     t_diff = td_avr + td_avr*0.1;		# make it easier (time difference larger)
   end;
+  #-----
 
   td[WINDOW + 1] = t_diff;			# push new t_diff in monitoring buffer
   td_avr = 0.0;					# t_diff average
@@ -247,24 +244,12 @@ begin
   end;
 end;
 
+#+++++
 sub
   show_correct_feedback
 begin
-  if (cnt_corr == 0) then
-    nf_current_corr = 0;
-  else
-    ratio = double(nf_corr)/double(cnt_corr); # calc. frequency of nf_trials
-    if (ratio < LOW_THRESH_NF) then                             # cumulate probability
-      nf_current_corr = nf_current_corr + random(2,5);
-    elseif (ratio > UP_THRESH_NF) then
-      nf_current_corr = nf_current_corr + random(1,4);
-    else
-      nf_current_corr = nf_current_corr + random(1,5);
-    end;
-  end;
   cnt_corr = cnt_corr + 1;
-  # no informative feedback in ca. 30 % (if cumulated value >= 10)
-  if (nf_current_corr < 10) then
+  if (random(1,2) == 1) then
     symbol.set_part(1, correct);
     feed_event.set_event_code("correct");
   else
@@ -281,21 +266,8 @@ end;
 sub
   show_incorrect_feedback
 begin
-  if (cnt_err == 0) then
-    nf_current_err = 0;
-  else
-    ratio = double(nf_err)/double(cnt_err); # calc. frequency of nf_trials
-    if (ratio < LOW_THRESH_NF) then                              # cumulate probability
-      nf_current_err = nf_current_err + random(2,5);
-    elseif (ratio > UP_THRESH_NF) then
-      nf_current_err = nf_current_err + random(1,4);
-    else
-      nf_current_err = nf_current_err + random(1,5);
-    end;
-  end;
   cnt_err = cnt_err + 1;
-  # no informative feedback in ca. 30 % (if cumulated value >= 10)
-  if ( nf_current_err < 10 ) then
+  if (random(1,2) == 1) then
     symbol.set_part(1, error);
     feed_event.set_event_code("error");
   else
@@ -305,7 +277,7 @@ begin
     feed_event.set_event_code("error_nf");
   end;
   feedbk.present();
-  resp_buff[WINDOW + 1] = 1;				# push "error" in monitoring buffer
+  resp_buff[WINDOW + 1] = 1;
 end;
 
 sub
@@ -314,8 +286,9 @@ begin
   symbol.set_part(1, miss);
   feed_event.set_event_code("late");
   feedbk.present();
-  resp_buff[WINDOW + 1] = -1;				# push "late" in monitoring buffer
+  resp_buff[WINDOW + 1] = -1;
 end;
+#-----
 
 sub
   show_feedback
@@ -329,24 +302,30 @@ begin
   end;
 end;
 
-#######################################################################################################################
-
-input_file input = new input_file;
-input.open("parameter.txt");
-loop
-until
-  input.end_of_file()
+#+++++
+sub
+  double read_parameter
 begin
-  td_stabil = input.get_double()
-end;
+  input_file input = new input_file;
+  input.open("parameter.txt");
+  loop
+  until
+    input.end_of_file()
+  begin
+    td_stabil = input.get_double()
+  end;
 
-if (!input.last_succeeded()) then
-  fehler.present();
-  exit("Scenario failed");
-else
-  t_diff = td_stabil;
-  input.close();
-end;
+  if (!input.last_succeeded()) then
+    exit("Scenario failed");
+  else
+    input.close();
+  end;
+  return td_stabil;
+end
+
+td_stabil = read_parameter();
+t_diff = td_stabil;
+#-----
 
 ##### start movement judgment ######
 td[1] = t_diff;			# set 1st value of td buffer
@@ -372,14 +351,14 @@ until
   n > N_MAX
 begin
   insert_defined_null_events(n);
+  #+++++
   double fix_dur = 3500.0 + (50.0* double(int(random()*10.0 + 0.5)));  	# fixation varies from 3500 to 4000 ms
   show_fixation_cross(int(fix_dur));
+  #-----
   compute_new_speed_and_position();
   log_trial_parameters();
 
   show_ball_movement();
-
-  ###### response evaluation #########
   resp.set_target_button(firstball);			# set target button
   ask.present();					# ask for response
 
@@ -392,21 +371,21 @@ end;
 
 log_trial_parameters();
 
-###  fixation belonging to last trial
 fix.set_duration(next_picture);
 fix.set_event_code("fix");
 fixation.present();
-wait_trg ( TRG_PER_TRIAL ); # subroutine -- here: wait for 9 triggers (1 trial)
+wait_trg(TRG_PER_TRIAL);
 
-### final fixation
-fix.set_duration(next_picture);
+fix.set_duration(fix_duration);
 fix.set_event_code("final_fix: 10000");
 fixation.present();
-wait_trg ( 10 ); # subroutine -- here: wait for 10 triggers (10000 ms)
+wait_trg(10);
 
+#+++++
 log_event.set_event_code("n_correct: " + string(cnt_corr) + " n_error: " + string(cnt_err));
 log_param.present();
 log_event.set_event_code("nf_correct: " + string(nf_corr) + " nf_error: " + string(nf_err));
 log_param.present();
+#-----
 
 ende.present();

@@ -21,6 +21,8 @@
 #  111 .. correct
 #  112 .. error
 #  110 .. no response
+#  121 .. correct - no feedback
+#  122 .. error - no feedback
 #  255 .. mr-trigger
 
 scenario = "feedback on ball movement judgment";
@@ -55,6 +57,7 @@ bitmap { filename = "ball2wob.bmp"; } ball2;
 bitmap { filename = "corr_wob.bmp"; width = 80; height = 80; } correct;
 bitmap { filename = "err_wob.bmp"; width = 80; height = 80; } error;
 bitmap { filename = "miss_wob.bmp"; width = 80; height = 80; } miss;
+bitmap { filename = "nf_wob.bmp"; width = 80; height = 80; } nf;
 
 box { height = 500; width = 7; color = 200,200,200; } wall;
 text { caption = "Welche Kugel?"; } question;

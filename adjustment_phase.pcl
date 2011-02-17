@@ -5,8 +5,8 @@
 # run2 (block2) is externally triggered -- stabilization phase during functional scans
 
 # configuration constants:
+bool ADJUSTMENT_PHASE = true;
 int TRG_PER_TRIAL = 9;	# trial length as trigger number
-double TRL_LENGTH = 9000.0;		# average trial length in ms
 double LEFT_MAX = -500.0;		# leftmost possible start position
 double WALL_POS = -1.0*LEFT_MAX;	# wall position
 double START_WIDTH = -100.0 - LEFT_MAX;	# start range from LEFT_MAX to -100
@@ -43,11 +43,17 @@ array<double> t[2];			# array for time until ball reaches wall
 # null events will be inserted before these trials
 array<int> SCHEDULE_OF_NULL_EVENTS[12] = { 7, 16, 24, 35, 48, 55, 63, 77, 89, 95, 101, 116 };
 
-### subroutines
-sub # wait for a given number of triggers
+#+++++ not used in adjustment phase
+int cnt_corr = 0;
+int cnt_err = 0;
+int nf_corr = 0;
+int nf_err = 0;
+#-----
+
+sub
   wait_trg(int no_trg)
 begin
-  trg = trg + no_trg;	# add waiting duration
+  trg = trg + no_trg;
   loop
   until
     pulse_manager.main_pulse_count() >= trg
@@ -66,7 +72,7 @@ begin
   wait_trg(TRG_PER_TRIAL);
 
   fix.set_duration(fix_duration);
-  fix.set_event_code("null_event " + string(TRL_LENGTH));
+  fix.set_event_code("null_event " + string(TRG_PER_TRIAL*1000));
   fixation.present();
 end;
 
@@ -148,7 +154,7 @@ end;
 sub
   compute_new_speed_and_position
 begin
-  firstball = random(1, 2);
+  firstball = random(1,2);
   secndball = 3 - firstball;
 
   loop
@@ -179,11 +185,13 @@ end;
 sub
   compute_new_t_diff(int n)
 begin
+  #+++++
   if resp_buff[WINDOW + 1] == 0 then		# adjustment run - react on every response
     t_diff = t_diff - t_diff * 0.1;		# make it more difficult (time difference smaller)
   elseif resp_buff[WINDOW + 1] == 1 then
     t_diff = t_diff + t_diff * 0.1;		# make it easier (time difference larger)
   end;
+  #-----
 
   td[WINDOW + 1] = t_diff;			# push new t_diff in monitoring buffer
   td_avr = 0.0;					# t_diff average
@@ -238,6 +246,7 @@ begin
   end;
 end;
 
+#+++++
 sub
   show_correct_feedback
 begin
@@ -264,6 +273,7 @@ begin
   feedbk.present();
   resp_buff[WINDOW + 1] = -1;
 end;
+#-----
 
 sub
   show_feedback
@@ -276,6 +286,18 @@ begin
     show_late_feedback();
   end;
 end;
+
+#+++++
+sub
+  save_parameter( double td_stabil)
+begin
+  ### print starting difficulty to output file in logfiles directory
+  output_file output = new output_file;
+  output.open("..\\parameter.txt" );
+  output.print(td_stabil);
+  output.close();
+end;
+#-----
 
 ##### start movement judgment ######
 td[1] = t_diff;			# set 1st value of td buffer
@@ -301,13 +323,13 @@ until
   n > N_MAX
 begin
   insert_defined_null_events(n);
+  #+++++
   show_fixation_cross(next_picture);
+  #-----
   compute_new_speed_and_position();
   log_trial_parameters();
 
   show_ball_movement();
-
-  ###### response evaluation #########
   resp.set_target_button(firstball);			# set target button
   ask.present();					# ask for response
 
@@ -316,34 +338,32 @@ begin
   n = n + 1;
   compute_running_averages(n);
   compute_new_t_diff(n);
-
-  # ONLY IN ADJUSTMENT BLOCK (exclude first 20 trials)
+  #+++++
   if (n > WINDOW) && (errors >= LOW_THRESHOLD) && (errors <= UP_THRESHOLD) then
     td_stabil = td_stabil + td_avr;			# run 1 -- adjust difficulty for start of run 2
     count_stabil = count_stabil + 1;
   end;
+  #-----
 end;
 
 log_trial_parameters();
 
+#+++++
 # estimate starting difficulty for next blocks
 if (count_stabil == 0) then
   td_stabil = t_diff;
 else
   td_stabil = td_stabil / double(count_stabil);
 end;
+#-----
 
 show_fixation_cross(next_picture);
-wait_trg(10);	# wait for 10 triggers (10000 ms)
+wait_trg(10);
 
-### print starting difficulty in logfile
+#+++++
 log_event.set_event_code("td_adjust: " + string(td_stabil));
 log_param.present();
-
-### print starting difficulty to output file in logfiles directory
-output_file output = new output_file;
-output.open("..\\parameter.txt" );
-output.print(td_stabil);
-output.close();
+save_parameter(td_stabil);
+#-----
 
 ende.present();
