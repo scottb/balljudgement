@@ -4,6 +4,8 @@
 # run1 (block1) is not externally triggered -- adjustment phase during pilot scans
 # run2 (block2) is externally triggered -- stabilization phase during functional scans
 
+bool ADJUSTMENT_PHASE = false;
+
 # configuration constants:
 int TRG_PER_TRIAL = 9;			# trial length as a number of triggers
 double LEFT_MAX = -500.0;		# leftmost possible start position
@@ -180,13 +182,19 @@ end;
 sub
   compute_new_t_diff(int n)
 begin
-  #+++++
-  if (errors < LOW_THRESHOLD) then		# stabilization run - react on changes of mean performance in monitoring buffer
-    t_diff = td_avr - td_avr*0.1;		# make it more difficult (time difference smaller)
-  elseif (errors > UP_THRESHOLD) then
-    t_diff = td_avr + td_avr*0.1;		# make it easier (time difference larger)
+  if ADJUSTMENT_PHASE then
+    if resp_buff[WINDOW + 1] == 0 then		# adjustment run - react on every response
+      t_diff = t_diff - t_diff * 0.1;		# make it more difficult (time difference smaller)
+    elseif resp_buff[WINDOW + 1] == 1 then
+      t_diff = t_diff + t_diff * 0.1;		# make it easier (time difference larger)
+    end;
+  else
+    if (errors < LOW_THRESHOLD) then		# stabilization run - react on changes of mean performance in monitoring buffer
+      t_diff = td_avr - td_avr*0.1;		# make it more difficult (time difference smaller)
+    elseif (errors > UP_THRESHOLD) then
+      t_diff = td_avr + td_avr*0.1;		# make it easier (time difference larger)
+    end;
   end;
-  #-----
 
   td[WINDOW + 1] = t_diff;			# push new t_diff in monitoring buffer
   td_avr = 0.0;					# t_diff average
@@ -241,40 +249,51 @@ begin
   end;
 end;
 
-#+++++
 sub
   show_correct_feedback
 begin
-  cnt_corr = cnt_corr + 1;
-  if (random(1,2) == 1) then
+  if ADJUSTMENT_PHASE then
     symbol.set_part(1, correct);
     feed_event.set_event_code("correct");
+    feedbk.present();
+    resp_buff[WINDOW + 1] = 0;
   else
-    nf_current_corr = 0;
-    nf_corr = nf_corr + 1;
-    symbol.set_part(1, nf);
-    feed_event.set_event_code("correct_nf");
+    cnt_corr = cnt_corr + 1;
+    if (random(1,2) == 1) then
+      symbol.set_part(1, correct);
+      feed_event.set_event_code("correct");
+    else
+      nf_corr = nf_corr + 1;
+      symbol.set_part(1, nf);
+      feed_event.set_event_code("correct_nf");
+    end;
+    feedbk.present();
+    log_param.present();
+    resp_buff[WINDOW + 1] = 0;
   end;
-  feedbk.present();
-  log_param.present();
-  resp_buff[WINDOW + 1] = 0;
 end;
 
 sub
   show_incorrect_feedback
 begin
-  cnt_err = cnt_err + 1;
-  if (random(1,2) == 1) then
+  if ADJUSTMENT_PHASE then
     symbol.set_part(1, error);
     feed_event.set_event_code("error");
+    feedbk.present();
+    resp_buff[WINDOW + 1] = 1;
   else
-    nf_current_err = 0;
-    nf_err = nf_err +1;
-    symbol.set_part(1, nf);
-    feed_event.set_event_code("error_nf");
+    cnt_err = cnt_err + 1;
+    if (random(1,2) == 1) then
+      symbol.set_part(1, error);
+      feed_event.set_event_code("error");
+    else
+      nf_err = nf_err +1;
+      symbol.set_part(1, nf);
+      feed_event.set_event_code("error_nf");
+    end;
+    feedbk.present();
+    resp_buff[WINDOW + 1] = 1;
   end;
-  feedbk.present();
-  resp_buff[WINDOW + 1] = 1;
 end;
 
 sub
@@ -285,7 +304,6 @@ begin
   feedbk.present();
   resp_buff[WINDOW + 1] = -1;
 end;
-#-----
 
 sub
   show_feedback
@@ -299,7 +317,6 @@ begin
   end;
 end;
 
-#+++++
 sub
   double read_parameter
 begin
@@ -318,11 +335,21 @@ begin
     input.close();
   end;
   return td_stabil;
-end
+end;
 
-td_stabil = read_parameter();
-t_diff = td_stabil;
-#-----
+sub
+  save_parameter( double stabil)
+begin
+  output_file output = new output_file;
+  output.open("..\\parameter.txt" );
+  output.print(stabil);
+  output.close();
+end;
+
+if !ADJUSTMENT_PHASE then
+  td_stabil = read_parameter();
+  t_diff = td_stabil;
+end;
 
 ##### start movement judgment ######
 td[1] = t_diff;			# set 1st value of td buffer
@@ -348,10 +375,13 @@ until
   n > N_MAX
 begin
   insert_defined_null_events(n);
-  #+++++
-  double fix_dur = 3500.0 + (50.0* double(int(random()*10.0 + 0.5)));  	# fixation varies from 3500 to 4000 ms
-  show_fixation_cross(int(fix_dur));
-  #-----
+  double fix_dur;
+  if ADJUSTMENT_PHASE then
+    show_fixation_cross(next_picture);
+  else
+    fix_dur = 3500.0 + (50.0* double(int(random()*10.0 + 0.5)));  	# fixation varies from 3500 to 4000 ms
+    show_fixation_cross(int(fix_dur));
+  end;
   compute_new_speed_and_position();
   log_trial_parameters();
 
@@ -364,25 +394,46 @@ begin
   n = n + 1;
   compute_running_averages(n);
   compute_new_t_diff(n);
+
+  if ADJUSTMENT_PHASE then
+    if (n > WINDOW) && (errors >= LOW_THRESHOLD) && (errors <= UP_THRESHOLD) then
+      td_stabil = td_stabil + td_avr;			# run 1 -- adjust difficulty for start of run 2
+      count_stabil = count_stabil + 1;
+    end;
+  end;
 end;
 
 log_trial_parameters();
 
-fix.set_duration(next_picture);
-fix.set_event_code("fix");
-fixation.present();
-wait_trg(TRG_PER_TRIAL);
+if ADJUSTMENT_PHASE then
+  # estimate starting difficulty for next blocks
+  if (count_stabil == 0) then
+    td_stabil = t_diff;
+  else
+    td_stabil = td_stabil / double(count_stabil);
+  end;
 
-fix.set_duration(fix_duration);
-fix.set_event_code("final_fix: 10000");
-fixation.present();
-wait_trg(10);
+  show_fixation_cross(next_picture);
+  wait_trg(10);
 
-#+++++
-log_event.set_event_code("n_correct: " + string(cnt_corr) + " n_error: " + string(cnt_err));
-log_param.present();
-log_event.set_event_code("nf_correct: " + string(nf_corr) + " nf_error: " + string(nf_err));
-log_param.present();
-#-----
+  log_event.set_event_code("td_adjust: " + string(td_stabil));
+  log_param.present();
+  save_parameter(td_stabil);
+else
+  fix.set_duration(next_picture);
+  fix.set_event_code("fix");
+  fixation.present();
+  wait_trg(TRG_PER_TRIAL);
+
+  fix.set_duration(next_picture);
+  fix.set_event_code("final_fix: 10000");
+  fixation.present();
+  wait_trg(10);
+
+  log_event.set_event_code("n_correct: " + string(cnt_corr) + " n_error: " + string(cnt_err));
+  log_param.present();
+  log_event.set_event_code("nf_correct: " + string(nf_corr) + " nf_error: " + string(nf_err));
+  log_param.present();
+end;
 
 ende.present();
